@@ -1,21 +1,41 @@
-const host = 'http://localhost:8080/api/v1'
-const mock = true;
-
-type TiktokDownloadResponse = {
-    url: URL | null;
-};
+const host = 'http://192.168.68.57:8080/'
 
 type TiktokDownloadRequest = {
-    tiktokShareUrl: URL;
+    url: URL;
 };
 
-export async function getTiktokDownloadUrl(url: TiktokDownloadRequest): Promise<TiktokDownloadResponse> {
-    if (mock) {
-        return (
-            {url: URL.parse('http://localhost:8080/api/v1/tiktok/12321321')}
-        )
+export async function download(request: TiktokDownloadRequest): Promise<void> {
+    const response = await fetch(`${host}tiktok-downloader/api/v1/download`, {
+        method: 'POST',
+        body: JSON.stringify(request),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        alert('Failed to download the video. Check the link and try again.');
+        throw new Error('Failed to download the video.');
     }
-    const apiUrl = `${host}/api/v1/tiktok?url=${url.tiktokShareUrl}`;
-    const response = await fetch(apiUrl);
-    return (await response.json()) as TiktokDownloadResponse;
+
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'video.mp4';
+    if (contentDisposition) {
+        const match = RegExp(/filename="(.+)"/).exec(contentDisposition);
+        if (match?.[1]) {
+            filename = match[1];
+        }
+    }
+
+    const videoBlob = await response.blob();
+
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(videoBlob);
+    downloadLink.download = filename;
+    downloadLink.style.display = 'none';
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click(); // Trigger download
+    document.body.removeChild(downloadLink); // Clean up
+    URL.revokeObjectURL(downloadLink.href); // Free memory
 }
