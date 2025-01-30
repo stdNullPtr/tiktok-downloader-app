@@ -1,11 +1,11 @@
-const host = 'http://192.168.68.57:8080/'
+const host: string = import.meta.env.VITE_DOWNLOADER_API_HOST
 
 type TiktokDownloadRequest = {
     url: URL;
 };
 
 export async function download(request: TiktokDownloadRequest): Promise<void> {
-    const response = await fetch(`${host}tiktok-downloader/api/v1/download`, {
+    const response = await fetch(`${host}/tiktok-downloader/api/v1/download`, {
         method: 'POST',
         body: JSON.stringify(request),
         headers: {
